@@ -341,7 +341,7 @@ function get_treepid() {
 #######################################
 function scan_all_ap() {
 
-        local mom_pid child_pid mom_pid_sum iterm
+        local i mom_pid child_pid mom_pid_sum iterm
         for i in 1
         do
                 rm -rf "${work_dir}/dump"* >/dev/null 2>&1
@@ -750,7 +750,7 @@ function exec_handshake_cuptrue() {
         #guan bi gon ji xterm
         local mom_pid child_pid mom_pid_sum iterm
         sleep 15
-        echo -e "\033[32mClose the ${attack_command} attack xterm...\033[0m"
+        echo -e "\033[32mClose the ${attack_mode} attack xterm...\033[0m"
         mom_pid="${attack_pid}"
         child_pid="$(get_treepid "${mom_pid}"|awk '{for(i = 1; i <= NF; i++) printf("%s%s", $i,"\n")}')"
         kill "${mom_pid}" >/dev/null 2>&1
