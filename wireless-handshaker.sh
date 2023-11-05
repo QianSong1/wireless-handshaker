@@ -629,7 +629,26 @@ function handshake_bga() {
                 exit_code=$?
                 if [ "${exit_code}" -eq 0 ]; then
                         display_cap_location
-                        hard_core_exit
+                        echo -e "\033[32m恭喜抓取握手包成功了\033[0m"
+                        echo -e "\n"
+                        echo -e "\033[33m你需要再抓取其它的目标吗?\033[0m"
+                        echo -e "--------"
+                        echo -e "\033[32m1).\033[0m yes重新扫描并抓取其它目标"
+                        echo -e "\033[32m2).\033[0m no退出程序"
+                        echo -e "--------"
+                        read -p "> " you_zl
+                        while [[ ! "${you_zl}" =~ ${regexp} ]]; do
+                                echo -e "\033[31mInvalid input.\033[0m"
+                                read -p "> " you_zl
+                        done
+                        case "${you_zl}" in
+                                1)
+                                        break
+                                        ;;
+                                2)
+                                        hard_core_exit
+                                        ;;
+                        esac
                 else
                         echo -e "\033[31m似乎抓取握手包失败了\033[0m"
                         echo -e "\n"
