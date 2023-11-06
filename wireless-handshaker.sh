@@ -14,6 +14,9 @@
 work_dir="$(dirname "$(realpath $0)")/temp"
 result_dir="$(dirname "$(realpath $0)")/result"
 
+#general vars
+force_killing_network_manager=1
+
 #pan duan shi fou root yon hu yun xing
 if [ "${UID}" != "0" ]; then
         echo -e "\033[31mPermission denied, please run this script as root.\033[0m"
@@ -29,6 +32,77 @@ fi
 if [ ! -d "${result_dir}" ]; then
         mkdir "${result_dir}" -p
 fi
+
+#######################################
+# 打印使用方法
+# Globals:
+#   none
+# Arguments:
+#   none
+# Outputs:
+#   none
+# Returns:
+#   none
+#######################################
+function print_usage() {
+
+        echo "用法：bash $0 [选项] [选项值]"
+        echo ""
+        echo "选项："
+        echo "  -k, --killing-network-manager                 是否强制关闭网卡干扰进程network-manager服务，1代表是(Default)，0代表否"
+        echo "  -h, --help                                    输出此帮助信息并退出"
+}
+
+#######################################
+# 获取用户传入的脚本参数，并作相应处理
+# Globals:
+#   ${force_killing_network_manager}、
+# Arguments:
+#   "$@"
+# Outputs:
+#   none
+# Returns:
+#   none
+#######################################
+function get_user_option_paramater() {
+
+        local opts
+        opts="$(getopt -q -o k:,h -l killing-network-manager:,help -- "$@")"
+        if [ $? -ne 0 ]; then
+                print_usage
+                exit 1
+        fi
+        eval set -- "${opts}"
+        while true; do
+                case "$1" in
+                        -k|--killing-network-manager)
+                                if [ "$2" == "1" ]; then
+                                        force_killing_network_manager=1
+                                elif [ "$2" == "0" ]; then
+                                        force_killing_network_manager=0
+                                else
+                                        echo -e "\033[31mBad option \033[37m$1 $2\033[0m"
+                                        print_usage
+                                        exit 1
+                                fi
+                                shift 2
+                                ;;
+                        -h|--help)
+                                print_usage
+                                shift 1
+                                exit 0
+                                ;;
+                        --)
+                                shift 1
+                                break
+                                ;;
+                        *)
+                                echo -e "\033[31mInternal error\033[0m"
+                                exit 1
+                                ;;
+                esac
+        done
+}
 
 #######################################
 # da ying app huan ying jie mian tu pian JPG
@@ -148,7 +222,7 @@ sleep 0.3
 # Returns:
 #   none
 #######################################
-install_dependent_software() {
+function install_dependent_software() {
 
         apt update
         if [ $? -ne 0 ]; then
@@ -289,7 +363,7 @@ function get_treepid() {
                                 shift 2
                                 ;;
                         -- )
-                                shift
+                                shift 1
                                 break
                                 ;;
                         * )
@@ -1041,13 +1115,17 @@ function select_interface() {
                 monitor_check=$?
                 if [ "${monitor_check}" -ne 0 ]; then
                         echo -e "\033[31mCHECK FAILD\033[0m \033[35mStart interface to monintor mode...\033[0m"
-                        airmon-ng check kill >/dev/null 2>&1
+                        if [ "${force_killing_network_manager}" -eq 1 ]; then
+                                airmon-ng check kill >/dev/null 2>&1
+                        else
+                                true
+                        fi
                         check_kill=$?
-                        ip link set "${wlan_card}" down
+                        ip link set "${wlan_card}" down >/dev/null 2>&1
                         if_down=$?
-                        iw dev "${wlan_card}" set type monitor
+                        iw dev "${wlan_card}" set type monitor >/dev/null 2>&1
                         if_monitor=$?
-                        ip link set "${wlan_card}" up
+                        ip link set "${wlan_card}" up >/dev/null 2>&1
                         if_up=$?
                         if [ "${check_kill}" -eq 0 ] && [ "${if_down}" -eq 0 ] && [ "${if_monitor}" -eq 0 ] && [ "${if_up}" -eq 0 ]; then
                                 echo -e "\033[32mSUCESS..\033[0m"
@@ -1133,9 +1211,12 @@ function main_menu() {
 #######################################
 function main() {
 
+        get_user_option_paramater "$@"
         print_app_info
         install_essensiel_tool
-        kill_busy_process
+        if [ "${force_killing_network_manager}" -eq 1 ]; then
+                kill_busy_process
+        fi
         print_notice
         select_interface
         main_menu
@@ -1247,6 +1328,10 @@ function hard_core_exit() {
         kill_son_process
         print_process_msg "恢复网卡接口模式"
         restore_interface_mode
+        if [ "${force_killing_network_manager}" -eq 1 ]; then
+                print_process_msg "恢复NetworkManager服务"
+                systemctl restart NetworkManager >/dev/null 2>&1
+        fi
         exit 0
 }
 
@@ -1274,6 +1359,10 @@ function exit_shell() {
                         kill_son_process
                         print_process_msg "恢复网卡接口模式"
                         restore_interface_mode
+                        if [ "${force_killing_network_manager}" -eq 1 ]; then
+                                print_process_msg "恢复NetworkManager服务"
+                                systemctl restart NetworkManager >/dev/null 2>&1
+                        fi
                         exit 0
                         ;;
                 n)
