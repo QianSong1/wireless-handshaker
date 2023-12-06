@@ -11,8 +11,8 @@
 #******************************************************************************************
 
 #ding  yi  bian  liang
-work_dir="$(dirname "$(realpath $0)")/temp"
-result_dir="$(dirname "$(realpath $0)")/result"
+work_dir="$(dirname "$(realpath -s $0)")/temp"
+result_dir="$(dirname "$(realpath -s $0)")/result"
 
 #general vars
 force_killing_network_manager=1
