@@ -495,6 +495,7 @@ function display_result_info() {
         server_list_total="$(cat "${work_dir}/server_list.csv"|egrep --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|wc -l)"
         if [ "${server_list_total}" -gt 0 ]; then
                 echo -e "\033[32m 序号         BSSID        信道     信号强度     加密方式      ESSID\033[0m"
+                echo -e "-----------------------------------------------------------------------------------"
                 local i=0
                 local valid_channels_24_and_5_ghz_regexp="[0-9]{1,3}"
                 while IFS=, read -r exp_mac _ _ exp_channel _ exp_enc _ exp_auth exp_power _ _ _ exp_idlength exp_essid _; do
@@ -580,7 +581,8 @@ function display_result_info() {
                                 echo -e "${airodump_color}${sp1}[${i}]${client}   ${sp5}${exp_mac}  ${sp2}${exp_channel}        ${sp4}${exp_power}%          ${exp_enc}${sp6}       ${exp_essid}${normal_color}"
                         fi
                 done < "${work_dir}/server_list.csv"
-        
+                echo -e "-----------------------------------------------------------------------------------"
+                
                 #IFS=$'\n'
                 #a=1
                 #for i in $(cat ${work_dir}/server_list.csv|egrep --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}')
