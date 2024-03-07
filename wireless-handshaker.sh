@@ -463,7 +463,7 @@ function prepare_server_client_list() {
         sleep 2
         target_line="$(cat "${work_dir}/dump-01.csv"|awk '/(^Station[s]?|^Client[es]?)/{print NR}')"
         target_line="$(awk -v target_line="${target_line}" 'BEGIN{print target_line - 1}')"
-        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|egrep -v --text "^$" > "${work_dir}/server_list.csv"
+        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|egrep -v --text "^$"|sort -t "," -rnk 9 > "${work_dir}/server_list.csv"
         cat "${work_dir}/dump-01.csv"|tail -n +"${target_line}"|dos2unix|egrep -v --text "^$" > "${work_dir}/client_list.csv"
         
         #zhun bei sniff client list
