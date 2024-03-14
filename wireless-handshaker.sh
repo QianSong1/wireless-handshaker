@@ -11,8 +11,8 @@
 #******************************************************************************************
 
 #ding  yi  bian  liang
-work_dir="$(dirname "$(realpath -s $0)")/temp"
-result_dir="$(dirname "$(realpath -s $0)")/result"
+work_dir="$(dirname "$(realpath -s "$0")")/temp"
+result_dir="$(dirname "$(realpath -s "$0")")/result"
 
 #general vars
 force_killing_network_manager=1
@@ -199,13 +199,13 @@ done
 local char
 i=1
 while [ "${i}" -lt 5 ]; do
-        for char in '/' '.' '\'
+        for char in "/" "." "\\"
         do
                 echo -n "                                    [${char}]                                      "
                 echo -ne "\r\r"
                 sleep 0.2
         done
-        let i++
+        i=$(( i + 1 ))
 done
 echo -e "\n"
 sleep 0.3
@@ -352,7 +352,7 @@ function get_treepid() {
         local pid sep opts
         opts="$(getopt -q -o s:,p: -l sep:,pid: -- "$@")" || return 1
         eval set -- "${opts}"
-        while [[ true ]]; do
+        while true; do
                 case "$1" in
                         -s|--sep )
                                 sep="$2"
@@ -425,11 +425,11 @@ function scan_all_ap() {
                 sleep 2
                 mom_pid="${scan_pid}"
                 child_pid="$(get_treepid "${mom_pid}"|awk '{for(i = 1; i <= NF; i++) printf("%s%s", $i,"\n")}')"
-                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
                 while true
                 do
                         if [ "${mom_pid_sum}" -gt 0 ]; then
-                                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+                                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
                                 sleep 1
                         else
                                 for iterm in ${child_pid}
@@ -463,9 +463,9 @@ function prepare_server_client_list() {
         sleep 2
         target_line="$(cat "${work_dir}/dump-01.csv"|awk '/(^Station[s]?|^Client[es]?)/{print NR}')"
         target_line="$(awk -v target_line="${target_line}" 'BEGIN{print target_line - 1}')"
-        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|egrep -v --text "^$"|sed -rn '1p' > "${work_dir}/server_list.csv"
-        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|egrep -v --text "^$"|sed -r  '1d'|sort -t "," -dk 1 >> "${work_dir}/server_list.csv"
-        cat "${work_dir}/dump-01.csv"|tail -n +"${target_line}"|dos2unix|egrep -v --text "^$" > "${work_dir}/client_list.csv"
+        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|grep -E -v --text "^$"|sed -rn '1p' > "${work_dir}/server_list.csv"
+        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|grep -E -v --text "^$"|sed -r  '1d'|sort -t "," -dk 1 >> "${work_dir}/server_list.csv"
+        cat "${work_dir}/dump-01.csv"|tail -n +"${target_line}"|dos2unix|grep -E -v --text "^$" > "${work_dir}/client_list.csv"
         
         #zhun bei sniff client list
         echo -e "server_mac,server_name" >> "${work_dir}/client.txt"
@@ -493,7 +493,7 @@ function prepare_server_client_list() {
 function display_result_info() {
 
         local server_list_total exp_mac chars_mac sp1 sp2 sp4 sp5 sp6 airodump_color normal_color client enc_length exp_channel exp_enc exp_auth exp_power exp_idlength exp_essid
-        server_list_total="$(cat "${work_dir}/server_list.csv"|egrep --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|wc -l)"
+        server_list_total="$(cat "${work_dir}/server_list.csv"|grep -E --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|wc -l)"
         if [ "${server_list_total}" -gt 0 ]; then
                 echo -e "\033[32m 序号         BSSID        信道     信号强度     加密方式      ESSID\033[0m"
                 echo -e "-----------------------------------------------------------------------------------"
@@ -601,7 +601,7 @@ function display_result_info() {
         else
                 local you_zl
                 echo -e "\033[31mNo network at the list, press [enter] to restart new hack\033[0m"
-                read -p "> " you_zl
+                read -rp "> " you_zl
                 hack_menu
         fi
 }
@@ -653,36 +653,36 @@ function handshake_bga() {
         display_result_info
         #xuan zhe yi  ge  xin hao
         local ap_num
-        read -p "选择您要抓包的WiFi序号[num]: " ap_num
+        read -rp "选择您要抓包的WiFi序号[num]: " ap_num
         while true
         do
                 if [ -z "${ap_num}" ]; then
                         clear
                         display_result_info
                         echo -e "\033[33mAP_num must be a number and can not be null!!\033[0m"
-                        read -p "选择您要抓包的WiFi序号[num]: " ap_num
+                        read -rp "选择您要抓包的WiFi序号[num]: " ap_num
                 elif [[ ! "${ap_num}" =~ ^[0-9]+$ ]]; then
                         clear
                         display_result_info
                         echo -e "\033[33mAP_num must be a number and can not be null!!\033[0m"
-                        read -p "选择您要抓包的WiFi序号[num]: " ap_num
-                elif [ "${ap_num}" -gt "$(cat "${work_dir}/server_list.csv"|egrep --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|wc -l)" ]; then
+                        read -rp "选择您要抓包的WiFi序号[num]: " ap_num
+                elif [ "${ap_num}" -gt "$(cat "${work_dir}/server_list.csv"|grep -E --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|wc -l)" ]; then
                         clear
                         display_result_info
                         echo -e "\033[33mAP_num con't be great of total number for ap list!!\033[0m"
-                        read -p "选择您要抓包的WiFi序号[num]: " ap_num
+                        read -rp "选择您要抓包的WiFi序号[num]: " ap_num
                 elif [ "${ap_num}" -eq 0 ]; then
                         clear
                         display_result_info
                         echo -e "\033[33mAP_num is must be great of 0!!\033[0m"
-                        read -p "选择您要抓包的WiFi序号[num]: " ap_num
+                        read -rp "选择您要抓包的WiFi序号[num]: " ap_num
                 else
                         break
                 fi
         done
         
         #ding yi mu biao  AP mac
-        mac_id="$(cat "${work_dir}/server_list.csv"|egrep --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|awk -F "," "NR==${ap_num}"'{print $1}')"
+        mac_id="$(cat "${work_dir}/server_list.csv"|grep -E --text -v "^$"|sed -r '1d'|awk -F "," '{if (length($1) >= 17) {print $0}}'|awk -F "," "NR==${ap_num}"'{print $1}')"
         if [ -z "${mac_id}" ] || [ "${mac_id}" == "" ]; then
                 echo -e "\033[31mThe target ap mac is null ,now program is exit.\033[0m"
                 exit 8
@@ -692,12 +692,12 @@ function handshake_bga() {
         target_ap_name="$(cat "${work_dir}/server_list.csv"|grep --text "${mac_id}"|awk -F "," '{if (NF>1) {print $(NF-1)}}'|awk '{print $1}')"
         
         #ding yi dang  qian  xindao
-        cur_channel="$(cat "${work_dir}/server_list.csv"|grep --text "${mac_id}"|awk '{print $6}'|awk -F "," '{print $1}'|egrep -v "^0$"|egrep -v "-"|egrep -v "[0-9]+e"|sort|uniq -c|sort -nk 1|tail -n 1|awk "NR==1"'{print $2}')"
+        cur_channel="$(cat "${work_dir}/server_list.csv"|grep --text "${mac_id}"|awk '{print $6}'|awk -F "," '{print $1}'|grep -E -v "^0$"|grep -E -v "-"|grep -E -v "[0-9]+e"|sort|uniq -c|sort -nk 1|tail -n 1|awk "NR==1"'{print $2}')"
 
         local you_zl exit_code
         echo -e "\033[36m已选择目标mac：\033[37m[${mac_id}]  \033[36m已选择目标AP：\033[37m[${target_ap_name}]  \033[36m已选择目标信道：\033[37m[${cur_channel}]\033[0m"
         echo -ne "\033[33m按[Enter]键继续...\033[0m"
-        read you_zl
+        read -r you_zl
 
         local regexp="^(1|2)$"
         while true; do
@@ -713,10 +713,10 @@ function handshake_bga() {
                         echo -e "\033[32m1).\033[0m yes重新扫描并抓取其它目标"
                         echo -e "\033[32m2).\033[0m no退出程序"
                         echo -e "--------"
-                        read -p "> " you_zl
+                        read -rp "> " you_zl
                         while [[ ! "${you_zl}" =~ ${regexp} ]]; do
                                 echo -e "\033[31mInvalid input.\033[0m"
-                                read -p "> " you_zl
+                                read -rp "> " you_zl
                         done
                         case "${you_zl}" in
                                 1)
@@ -734,10 +734,10 @@ function handshake_bga() {
                         echo -e "\033[32m1).\033[0m yes再来一次"
                         echo -e "\033[32m2).\033[0m no重新扫描新的信号"
                         echo -e "--------"
-                        read -p "> " you_zl
+                        read -rp "> " you_zl
                         while [[ ! "${you_zl}" =~ ${regexp} ]]; do
                                 echo -e "\033[31mInvalid input.\033[0m"
-                                read -p "> " you_zl
+                                read -rp "> " you_zl
                         done
                         case "${you_zl}" in
                                 1)
@@ -774,7 +774,7 @@ function exec_handshake_cuptrue() {
                 sleep 1
                 for i in 1
                 do
-                        rm -rf "${result_dir}/${mac_id//:/-}"* >/dev/null 2>&1
+                        rm -rf "${result_dir:?}/${mac_id//:/-}"* >/dev/null 2>&1
                         sleep 2
                         changer_mac_addr
                         xterm -geometry "107-0+0" -bg "#000000" -fg "#FFFFFF" -title "Handshake AP for ${mac_id}" -e airodump-ng --ignore-negative-one -d "${mac_id}" -w "${result_dir}/${mac_id//:/-}" -c "${cur_channel}" -a "${wlan_card}" &
@@ -786,7 +786,7 @@ function exec_handshake_cuptrue() {
                 sleep 1
                 for i in 1
                 do
-                        rm -rf "${result_dir}/${target_ap_name}-${mac_id//:/-}"* >/dev/null 2>&1
+                        rm -rf "${result_dir:?}/${target_ap_name}-${mac_id//:/-}"* >/dev/null 2>&1
                         sleep 2
                         changer_mac_addr
                         xterm -geometry "107-0+0" -bg "#000000" -fg "#FFFFFF" -title "Handshake AP for ${mac_id}" -e airodump-ng --ignore-negative-one -d "${mac_id}" -w "${result_dir}/${target_ap_name}-${mac_id//:/-}" -c "${cur_channel}" -a "${wlan_card}" &
@@ -831,11 +831,11 @@ function exec_handshake_cuptrue() {
         mom_pid="${attack_pid}"
         child_pid="$(get_treepid "${mom_pid}"|awk '{for(i = 1; i <= NF; i++) printf("%s%s", $i,"\n")}')"
         kill "${mom_pid}" >/dev/null 2>&1
-        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
         while true
         do
                 if [ "${mom_pid_sum}" -gt 0 ]; then
-                        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+                        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
                         sleep 1
                 else
                         for iterm in ${child_pid}
@@ -851,15 +851,15 @@ function exec_handshake_cuptrue() {
         local i=1
         mom_pid="${handshake_pid}"
         child_pid="$(get_treepid "${mom_pid}"|awk '{for(i = 1; i <= NF; i++) printf("%s%s", $i,"\n")}')"
-        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
         while true
         do
                 if [ "${mom_pid_sum}" -gt 0 ]; then
-                        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+                        mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
                         echo -n "Now ${i} seconds has passd.."
                         echo -ne "\r\r"
                         sleep 1
-                        let i+=1
+                        i=$(( i + 1 ))
                 else
                         for iterm in ${child_pid}
                         do
@@ -888,7 +888,7 @@ function handshake_check() {
         if [ -z "${target_ap_name}" ] || [ "${target_ap_name}" == "" ]; then
                 echo -e "\033[35mChecking handshake \033[34m[${result_dir}/${mac_id//:/-}-01.cap]\033[0m \033[35m....\033[0m"
                 sleep 3
-                cowpatty -c -r ${result_dir}/${mac_id//:/-}-01.cap >/dev/null 2>&1
+                cowpatty -c -r "${result_dir}/${mac_id//:/-}"-01.cap >/dev/null 2>&1
                 exit_code=$?
                 if [ "${exit_code}" -eq 0 ]; then
                         echo -e "\033[32mThe target handshake \033[34m[${result_dir}/${mac_id//:/-}-01.cap]\033[0m \033[32mcheck sucessfully \033[0m"
@@ -900,7 +900,7 @@ function handshake_check() {
         else
                 echo -e "\033[35mChecking handshake \033[34m[${result_dir}/${target_ap_name}-${mac_id//:/-}-01.cap]\033[0m \033[35m....\033[0m"
                 sleep 3
-                cowpatty -c -r ${result_dir}/${target_ap_name}-${mac_id//:/-}-01.cap >/dev/null 2>&1
+                cowpatty -c -r "${result_dir}/${target_ap_name}-${mac_id//:/-}"-01.cap >/dev/null 2>&1
                 exit_code=$?
                 if [ "${exit_code}" -eq 0 ]; then
                         echo -e "\033[32mThe target handshake \033[34m[${result_dir}/${target_ap_name}-${mac_id//:/-}-01.cap]\033[0m \033[32mcheck sucessfully \033[0m"
@@ -955,7 +955,7 @@ function start_exec_handshake() {
         echo -e "--------"
         echo -e "\033[32m2. 开始启动抓包\033[0m"
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
-        read -p "Please select: " you_zl
+        read -rp "Please select: " you_zl
         case "${you_zl}" in
                 1)
                         hack_menu
@@ -994,7 +994,7 @@ function hack_menu() {
         echo -e "\033[32m3. 5Ghz\033[0m"
         echo -e "\033[32m4. 2.4Ghz & 5Ghz (将会扫描所有频段的信号)\033[0m"
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
-        read -p "Please select: " you_zl
+        read -rp "Please select: " you_zl
         case "${you_zl}" in
                 1)
                         main_menu
@@ -1037,7 +1037,7 @@ function show_interface_list() {
         local if_list if_name iface_num dri_num if_driver if_usb_id if_chipest if_num
         rm -rf "${work_dir}/interface_list.txt" >/dev/null 2>&1
         sleep 2
-        if_list="$(ip a|egrep "^[0-9]+" |awk -F ":" '{print $2}'|awk '{print $1}'|egrep -v "^lo$")"
+        if_list="$(ip a|grep -E "^[0-9]+" |awk -F ":" '{print $2}'|awk '{print $1}'|grep -E -v "^lo$")"
         local i=1
         for if_name in ${if_list}
         do
@@ -1048,7 +1048,7 @@ function show_interface_list() {
                 if_chipest="$(lsusb|awk -v if_usb_id="${if_usb_id}" '{if ($6==if_usb_id) {print $0}}'|head -n 1|awk '{for (i=7;i<=NF;i++) printf("%s ", $i); print ""}')"
                 #if_suport_band=
                 echo -e "${i}., ${if_name}, driver: ${if_driver} chipest: ${if_chipest}" >> "${work_dir}/interface_list.txt"
-                let i++
+                i=$(( i + 1 ))
         done
         
         #du qu list from file
@@ -1078,21 +1078,21 @@ function select_interface() {
         local inface_num card_check_status interface_status monitor_check check_kill if_down if_monitor if_up
         show_interface_list
         echo -e "\033[33mPlease select one interface.\033[0m"
-        read -p "> " inface_num
+        read -rp "> " inface_num
         while true
         do
                 if [ -z "${inface_num}" ] || [ "${inface_num}" == "" ]; then
                         echo -e "\033[31mInface_num can not be null\033[0m"
-                        read -p "> " inface_num
+                        read -rp "> " inface_num
                 elif [ "${inface_num}" == "0" ]; then
                         echo -e "\033[31mInface_num can not be 0\033[0m"
-                        read -p "> " inface_num
+                        read -rp "> " inface_num
                 elif [[ ! "${inface_num}" =~ ^[0-9]+$ ]]; then
                         echo -e "\033[31mInface_num must be a number type\033[0m"
-                        read -p "> " inface_num
+                        read -rp "> " inface_num
                 elif [ "${inface_num}" -gt "$(cat "${work_dir}/interface_list.txt"|wc -l)" ]; then
                         echo -e "\033[31mInface_num must be less than the interface list total num\033[0m"
-                        read -p "> " inface_num
+                        read -rp "> " inface_num
                 else
                         break
                 fi
@@ -1146,7 +1146,7 @@ function select_interface() {
 
         local you_zl
         echo -ne "\033[33m按[Enter]键继续....\033[0m"
-        read you_zl
+        read -r you_zl
 }
 
 #######################################
@@ -1174,7 +1174,7 @@ function main_menu() {
         echo -e "\033[32m3. mdk4 邪恶抓包(5Ghz推荐)\033[0m"
         echo -e "\033[32m4. aireplay-ng 邪恶抓包(备选)\033[0m"
         echo -e "\033[36m--------------------------------------------------------------------\033[0m"
-        read -p "Please select: " you_zl
+        read -rp "Please select: " you_zl
         case "${you_zl}" in
                 1)
                         select_interface
@@ -1251,7 +1251,7 @@ function print_process_msg() {
                 msg="$(eval "echo -e \"${r_char}\"")"
                 echo -ne "\033[?25l${msg}\033[0m"
                 echo -ne "\r\r"
-                let i++
+                i=$(( i + 1 ))
                 sleep 0.3
         done
         echo -e "\033[?25l${msg} \033[32mOK\033[0m"
@@ -1278,11 +1278,11 @@ function kill_son_process() {
                 mom_pid="${parent_pid}"
                 child_pid="$(get_treepid "${mom_pid}"|awk '{for(i = 1; i <= NF; i++) printf("%s%s", $i,"\n")}')"
                 kill "${mom_pid}" >/dev/null 2>&1
-                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
                 while true
                 do
                         if [ "${mom_pid_sum}" -gt 0 ]; then
-                                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|egrep "^${mom_pid}$"|grep -v "grep"|wc -l)"
+                                mom_pid_sum="$(ps -ef|awk "NR>1"'{print $2}'|grep -E "^${mom_pid}$"|grep -v "grep"|wc -l)"
                                 sleep 1
                         else
                                 for iterm in ${child_pid}
@@ -1355,7 +1355,7 @@ function exit_shell() {
         echo
         echo -e "\033[31m\033[1mAre you sure want exit now? [y/n]:\033[0m "
         echo -n "> "
-        read you_zl
+        read -r you_zl
         case "${you_zl}" in
                 y)
                         print_process_msg "清理进程"
