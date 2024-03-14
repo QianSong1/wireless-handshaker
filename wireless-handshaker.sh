@@ -418,7 +418,7 @@ function scan_all_ap() {
         local i mom_pid child_pid mom_pid_sum iterm
         for i in 1
         do
-                rm -rf "${work_dir}/dump"* >/dev/null 2>&1
+                rm -rf "${work_dir:?}/dump"* >/dev/null 2>&1
                 sleep 2
                 xterm -geometry "107-0+0" -bg "#000000" -fg "#FFFFFF" -title "Scan all AP" -e airodump-ng "${wlan_card}" --band "$1" -w "${work_dir}/dump" &
                 scan_pid=$!
@@ -457,9 +457,9 @@ function scan_all_ap() {
 function prepare_server_client_list() {
 
         local target_line server_mac server_name server_mac_char
-        rm -rf "${work_dir}/server_list.csv" >/dev/null 2>&1
-        rm -rf "${work_dir}/client_list.csv" >/dev/null 2>&1
-        rm -rf "${work_dir}/client.txt" >/dev/null 2>&1
+        rm -rf "${work_dir:?}/server_list.csv" >/dev/null 2>&1
+        rm -rf "${work_dir:?}/client_list.csv" >/dev/null 2>&1
+        rm -rf "${work_dir:?}/client.txt" >/dev/null 2>&1
         sleep 2
         target_line="$(cat "${work_dir}/dump-01.csv"|awk '/(^Station[s]?|^Client[es]?)/{print NR}')"
         target_line="$(awk -v target_line="${target_line}" 'BEGIN{print target_line - 1}')"
@@ -627,7 +627,7 @@ function changer_mac_addr() {
 #######################################
 # 主抓包函数
 # Globals:
-#   ${mac_id}、${target_ap_name}、${cur_channel}
+#   ${mac_id}、${mac_address}、${target_ap_name}、${cur_channel}
 # Arguments:
 #   传入信道扫描标识，支持：a、bg、bga
 # Outputs:
@@ -687,6 +687,9 @@ function handshake_bga() {
                 echo -e "\033[31mThe target ap mac is null ,now program is exit.\033[0m"
                 exit 8
         fi
+
+        #ding yi mu biao AP mac address
+        mac_address="${mac_id//:/-}"
 
         #ding yi mu miao AP name
         target_ap_name="$(cat "${work_dir}/server_list.csv"|grep --text "${mac_id}"|awk -F "," '{if (NF>1) {print $(NF-1)}}'|awk '{print $1}')"
@@ -774,7 +777,7 @@ function exec_handshake_cuptrue() {
                 sleep 1
                 for i in 1
                 do
-                        rm -rf "${result_dir:?}/${mac_id//:/-}"* >/dev/null 2>&1
+                        rm -rf "${result_dir:?}/${mac_address:?}"* >/dev/null 2>&1
                         sleep 2
                         changer_mac_addr
                         xterm -geometry "107-0+0" -bg "#000000" -fg "#FFFFFF" -title "Handshake AP for ${mac_id}" -e airodump-ng --ignore-negative-one -d "${mac_id}" -w "${result_dir}/${mac_id//:/-}" -c "${cur_channel}" -a "${wlan_card}" &
@@ -786,7 +789,7 @@ function exec_handshake_cuptrue() {
                 sleep 1
                 for i in 1
                 do
-                        rm -rf "${result_dir:?}/${target_ap_name}-${mac_id//:/-}"* >/dev/null 2>&1
+                        rm -rf "${result_dir:?}/${target_ap_name:?}-${mac_address:?}"* >/dev/null 2>&1
                         sleep 2
                         changer_mac_addr
                         xterm -geometry "107-0+0" -bg "#000000" -fg "#FFFFFF" -title "Handshake AP for ${mac_id}" -e airodump-ng --ignore-negative-one -d "${mac_id}" -w "${result_dir}/${target_ap_name}-${mac_id//:/-}" -c "${cur_channel}" -a "${wlan_card}" &
@@ -1035,7 +1038,7 @@ function show_interface_list() {
 
         #bao cun list to file
         local if_list if_name iface_num dri_num if_driver if_usb_id if_chipest if_num
-        rm -rf "${work_dir}/interface_list.txt" >/dev/null 2>&1
+        rm -rf "${work_dir:?}/interface_list.txt" >/dev/null 2>&1
         sleep 2
         if_list="$(ip a|grep -E "^[0-9]+" |awk -F ":" '{print $2}'|awk '{print $1}'|grep -E -v "^lo$")"
         local i=1
