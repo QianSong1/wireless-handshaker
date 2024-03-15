@@ -463,17 +463,17 @@ function prepare_server_client_list() {
         sleep 2
         target_line="$(cat "${work_dir}/dump-01.csv"|awk '/(^Station[s]?|^Client[es]?)/{print NR}')"
         target_line="$(awk -v target_line="${target_line}" 'BEGIN{print target_line - 1}')"
-        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|grep -E -v --text "^$"|sed -rn '1p' > "${work_dir}/server_list.csv"
-        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|grep -E -v --text "^$"|sed -r  '1d'|sort -t "," -dk 1 >> "${work_dir}/server_list.csv"
-        cat "${work_dir}/dump-01.csv"|tail -n +"${target_line}"|dos2unix|grep -E -v --text "^$" > "${work_dir}/client_list.csv"
+        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|grep -E -v --text "^$"|sed -rn '1p' > "${work_dir:?}/server_list.csv"
+        cat "${work_dir}/dump-01.csv"|head -n "${target_line}"|dos2unix|grep -E -v --text "^$"|sed -r  '1d'|sort -t "," -dk 1 >> "${work_dir:?}/server_list.csv"
+        cat "${work_dir}/dump-01.csv"|tail -n +"${target_line}"|dos2unix|grep -E -v --text "^$" > "${work_dir:?}/client_list.csv"
         
         #zhun bei sniff client list
-        echo -e "server_mac,server_name" >> "${work_dir}/client.txt"
+        echo -e "server_mac,server_name" >> "${work_dir:?}/client.txt"
         while IFS=, read -r _ _ _ _ _ server_mac server_name; do
                 server_mac_char="${#server_mac}"
                 if [ "${server_mac_char}" -ge 17 ]; then
                         server_mac="$(echo "${server_mac}" | awk '{gsub(/ /,""); print}')"
-                        echo -e "${server_mac},${server_name}" >> "${work_dir}/client.txt"
+                        echo -e "${server_mac},${server_name}" >> "${work_dir:?}/client.txt"
                 fi
         done < "${work_dir}/client_list.csv"
         sleep 2
@@ -808,15 +808,15 @@ function exec_handshake_cuptrue() {
                         sleep 2
                         ;;
                 "mdk3_deauth")
-                        echo  "${mac_id}" >"${work_dir}/black_mac_list.txt"
-                        echo  "" >>"${work_dir}/black_mac_list.txt"
+                        echo  "${mac_id}" >"${work_dir:?}/black_mac_list.txt"
+                        echo  "" >>"${work_dir:?}/black_mac_list.txt"
                         xterm -geometry "85+0+0" -bg "#000000" -fg "#FF0009" -title "Duan kai conn on ${mac_id}" -e "${attack_command}" "${wlan_card}" d -b "${work_dir}/black_mac_list.txt" -c "${cur_channel}" &
                         attack_pid=$!
                         sleep 2
                         ;;
                 "mdk4_deauth")
-                        echo  "${mac_id}" >"${work_dir}/black_mac_list.txt"
-                        echo  "" >>"${work_dir}/black_mac_list.txt"
+                        echo  "${mac_id}" >"${work_dir:?}/black_mac_list.txt"
+                        echo  "" >>"${work_dir:?}/black_mac_list.txt"
                         xterm -geometry "85+0+0" -bg "#000000" -fg "#FF0009" -title "Duan kai conn on ${mac_id}" -e "${attack_command}" "${wlan_card}" d -b "${work_dir}/black_mac_list.txt" -c "${cur_channel}" &
                         attack_pid=$!
                         sleep 2
@@ -1050,7 +1050,7 @@ function show_interface_list() {
                 if_usb_id="$(cut -b 5-14 < "/sys/class/net/${if_name}/device/modalias" | sed 's/^.//;s/p/:/'|awk '{print tolower($1)}')"
                 if_chipest="$(lsusb|awk -v if_usb_id="${if_usb_id}" '{if ($6==if_usb_id) {print $0}}'|head -n 1|awk '{for (i=7;i<=NF;i++) printf("%s ", $i); print ""}')"
                 #if_suport_band=
-                echo -e "${i}., ${if_name}, driver: ${if_driver} chipest: ${if_chipest}" >> "${work_dir}/interface_list.txt"
+                echo -e "${i}., ${if_name}, driver: ${if_driver} chipest: ${if_chipest}" >> "${work_dir:?}/interface_list.txt"
                 i=$(( i + 1 ))
         done
         
