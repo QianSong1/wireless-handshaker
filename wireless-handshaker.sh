@@ -1096,10 +1096,15 @@ function select_interface() {
 	interface_status=$?
 
 	#pan duan wang ka  shi  fou  kai qi jian  ting
+	local interface_mode
 	if [ "${interface_status}" -eq 0 ]; then
 		echo -e "\033[33mChecking interface ${wlan_card} work mode monitor.....\033[0m"
-		iwconfig "${wlan_card}" | grep "Mode:Monitor" >/dev/null 2>&1
-		monitor_check=$?
+		interface_mode="$(iw dev "${wlan_card}" info 2>/dev/null | grep -i "type" | awk '{print $2}')"
+		if [ "${interface_mode^^}" == "MONITOR" ]; then
+			monitor_check=0
+		else
+			monitor_check=1
+		fi
 		if [ "${monitor_check}" -ne 0 ]; then
 			echo -e "\033[31mCHECK FAILD\033[0m \033[35mStart interface to monintor mode...\033[0m"
 			if [ "${force_killing_network_manager}" -eq 1 ]; then
