@@ -315,6 +315,12 @@ function kill_busy_process() {
 		exit 1
 	fi
 
+	systemctl disable NetworkManager.service >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo -e "\033[31mError for check kill Disturbed process, quit !\033[0m"
+		exit 1
+	fi
+
 	systemctl stop wpa_supplicant.service >/dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		echo -e "\033[31mError for check kill Disturbed process, quit !\033[0m"
@@ -1122,6 +1128,7 @@ function select_interface() {
 			if [ "${force_killing_network_manager}" -eq 1 ]; then
 				airmon-ng check kill >/dev/null 2>&1
 				systemctl stop NetworkManager.service >/dev/null 2>&1
+				systemctl disable NetworkManager.service >/dev/null 2>&1
 				systemctl stop wpa_supplicant.service >/dev/null 2>&1
 			else
 				true
@@ -1333,8 +1340,9 @@ function hard_core_exit() {
 	restore_interface_mode
 	if [ "${force_killing_network_manager}" -eq 1 ]; then
 		print_process_msg "恢复NetworkManager服务"
-		systemctl restart NetworkManager >/dev/null 2>&1
-		systemctl restart wpa_supplicant >/dev/null 2>&1
+		systemctl restart NetworkManager.service >/dev/null 2>&1
+		systemctl enable NetworkManager.service >/dev/null 2>&1
+		systemctl restart wpa_supplicant.service >/dev/null 2>&1
 	fi
 	exit 0
 }
@@ -1365,8 +1373,9 @@ function exit_shell() {
 		restore_interface_mode
 		if [ "${force_killing_network_manager}" -eq 1 ]; then
 			print_process_msg "恢复NetworkManager服务"
-			systemctl restart NetworkManager >/dev/null 2>&1
-			systemctl restart wpa_supplicant >/dev/null 2>&1
+			systemctl restart NetworkManager.service >/dev/null 2>&1
+			systemctl enable NetworkManager.service >/dev/null 2>&1
+			systemctl restart wpa_supplicant.service >/dev/null 2>&1
 		fi
 		exit 0
 		;;
