@@ -308,6 +308,18 @@ function kill_busy_process() {
 		echo -e "\033[31mError for check kill Disturbed process, quit !\033[0m"
 		exit 1
 	fi
+
+	systemctl stop NetworkManager.service >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo -e "\033[31mError for check kill Disturbed process, quit !\033[0m"
+		exit 1
+	fi
+
+	systemctl stop wpa_supplicant.service >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo -e "\033[31mError for check kill Disturbed process, quit !\033[0m"
+		exit 1
+	fi
 }
 
 #######################################
@@ -1109,6 +1121,8 @@ function select_interface() {
 			echo -e "\033[31mCHECK FAILD\033[0m \033[35mStart interface to monintor mode...\033[0m"
 			if [ "${force_killing_network_manager}" -eq 1 ]; then
 				airmon-ng check kill >/dev/null 2>&1
+				systemctl stop NetworkManager.service >/dev/null 2>&1
+				systemctl stop wpa_supplicant.service >/dev/null 2>&1
 			else
 				true
 			fi
@@ -1320,6 +1334,7 @@ function hard_core_exit() {
 	if [ "${force_killing_network_manager}" -eq 1 ]; then
 		print_process_msg "恢复NetworkManager服务"
 		systemctl restart NetworkManager >/dev/null 2>&1
+		systemctl restart wpa_supplicant >/dev/null 2>&1
 	fi
 	exit 0
 }
@@ -1351,6 +1366,7 @@ function exit_shell() {
 		if [ "${force_killing_network_manager}" -eq 1 ]; then
 			print_process_msg "恢复NetworkManager服务"
 			systemctl restart NetworkManager >/dev/null 2>&1
+			systemctl restart wpa_supplicant >/dev/null 2>&1
 		fi
 		exit 0
 		;;
