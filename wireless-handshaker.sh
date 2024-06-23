@@ -1126,10 +1126,7 @@ function select_interface() {
 		if [ "${monitor_check}" -ne 0 ]; then
 			echo -e "\033[31mCHECK FAILD\033[0m \033[35mStart interface to monintor mode...\033[0m"
 			if [ "${force_killing_network_manager}" -eq 1 ]; then
-				airmon-ng check kill >/dev/null 2>&1
-				systemctl stop NetworkManager.service >/dev/null 2>&1
-				systemctl disable NetworkManager.service >/dev/null 2>&1
-				systemctl stop wpa_supplicant.service >/dev/null 2>&1
+				kill_networkmanager_service
 			else
 				true
 			fi
@@ -1157,6 +1154,38 @@ function select_interface() {
 	local you_zl
 	echo -ne "\033[33m按[Enter]键继续....\033[0m"
 	read -r you_zl
+}
+
+#######################################
+# 禁用networkmanager 干扰进程服务
+# Globals:
+#   none
+# Arguments:
+#   none
+# Outputs:
+#   none
+# Returns:
+#   0: 表示所有进程查杀成功
+#   1: 表示至少有1个进程查杀失败，整体操作失败
+#######################################
+function kill_networkmanager_service() {
+
+	local airmon_check_kill_status stop_networkmanager_status disable_networkmanager_status stop_wpa_supplicant_status
+
+	airmon-ng check kill >/dev/null 2>&1
+	airmon_check_kill_status=$?
+	systemctl stop NetworkManager.service >/dev/null 2>&1
+	stop_networkmanager_status=$?
+	systemctl disable NetworkManager.service >/dev/null 2>&1
+	disable_networkmanager_status=$?
+	systemctl stop wpa_supplicant.service >/dev/null 2>&1
+	stop_wpa_supplicant_status=$?
+
+	if [ "${airmon_check_kill_status}" -eq 0 ] && [ "${stop_networkmanager_status}" -eq 0 ] && [ "${disable_networkmanager_status}" -eq 0 ] && [ "${stop_wpa_supplicant_status}" -eq 0 ]; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 #######################################
