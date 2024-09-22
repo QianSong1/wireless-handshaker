@@ -14,6 +14,23 @@
 work_dir="$(dirname "$(realpath -s "$0")")/temp"
 result_dir="$(dirname "$(realpath -s "$0")")/result"
 
+#reconfig work_dir & result_dir
+random_str="$(
+	</dev/urandom tr -dc 0-9A-Za-z | head -c 16
+	echo
+)"
+time_str="$(date "+%F-%H%M%S")"
+work_dir="/tmp/wireless-handshaker-${random_str}-${time_str}"
+
+home_dir="$(find /home -maxdepth 1 -type d | grep -Ev "^(/home)$" | head -n 1)"
+if [ -d "${home_dir:-/home/kali}/Desktop" ]; then
+	result_dir="${home_dir:-/home/kali}/Desktop/cap-location"
+elif [ -d "${home_dir:-/home/kali}/桌面" ]; then
+	result_dir="${home_dir:-/home/kali}/桌面/cap-location"
+else
+	result_dir="${home_dir:-/home/kali}/Desktop/cap-location"
+fi
+
 #general vars
 force_killing_network_manager=1
 
@@ -1373,6 +1390,8 @@ function hard_core_exit() {
 		systemctl enable NetworkManager.service >/dev/null 2>&1
 		systemctl restart wpa_supplicant.service >/dev/null 2>&1
 	fi
+	print_process_msg "清理临时文件"
+	rm -rf "${work_dir:?}" >/dev/null 2>&1
 	exit 0
 }
 
@@ -1406,6 +1425,8 @@ function exit_shell() {
 			systemctl enable NetworkManager.service >/dev/null 2>&1
 			systemctl restart wpa_supplicant.service >/dev/null 2>&1
 		fi
+		print_process_msg "清理临时文件"
+		rm -rf "${work_dir:?}" >/dev/null 2>&1
 		exit 0
 		;;
 	n)
